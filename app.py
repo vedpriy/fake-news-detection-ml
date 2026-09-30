@@ -1,14 +1,25 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import joblib
 import re
 import os
 
 app = Flask(__name__)
 
-# Allow requests from the deployed frontend
-CORS(app)
 
+# -----------------------------
+# CORS
+# -----------------------------
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return response
+
+
+# -----------------------------
+# Load Model
+# -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 model = joblib.load(
@@ -20,23 +31,56 @@ vectorizer = joblib.load(
 )
 
 
+# -----------------------------
+# Text Cleaning
+# -----------------------------
 def clean_text(text):
     text = text.lower()
-    text = re.sub(r"http\S+|www\S+|https\S+", "", text)
-    text = re.sub(r"<.*?>", "", text)
-    text = re.sub(r"[^a-zA-Z\s]", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
+
+    text = re.sub(
+        r"http\S+|www\S+|https\S+",
+        "",
+        text
+    )
+
+    text = re.sub(
+        r"<.*?>",
+        "",
+        text
+    )
+
+    text = re.sub(
+        r"[^a-zA-Z\s]",
+        " ",
+        text
+    )
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    ).strip()
 
     return text
 
 
+# -----------------------------
+# Home
+# -----------------------------
 @app.route("/")
 def home():
     return "Fake News Detection API is running!"
 
 
-@app.route("/predict", methods=["POST"])
+# -----------------------------
+# Prediction
+# -----------------------------
+@app.route("/predict", methods=["POST", "OPTIONS"])
 def predict():
+
+    # Handle browser CORS preflight
+    if request.method == "OPTIONS":
+        return "", 204
 
     data = request.get_json()
 
@@ -63,8 +107,14 @@ def predict():
     })
 
 
+# -----------------------------
+# Run Server
+# -----------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+
+    port = int(
+        os.environ.get("PORT", 5000)
+    )
 
     app.run(
         host="0.0.0.0",
