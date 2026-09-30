@@ -2,6 +2,8 @@ const newsInput = document.getElementById("newsInput");
 const checkButton = document.getElementById("checkButton");
 const result = document.getElementById("result");
 
+// Your deployed Python Flask backend on Render
+const API_URL = "YOUR_RENDER_BACKEND_URL";
 
 checkButton.addEventListener("click", async () => {
 
@@ -17,7 +19,7 @@ checkButton.addEventListener("click", async () => {
 
     try {
 
-        const response = await fetch("http://localhost:5000/predict", {
+        const response = await fetch(`${API_URL}/predict`, {
             method: "POST",
 
             headers: {
@@ -30,6 +32,11 @@ checkButton.addEventListener("click", async () => {
         });
 
         const data = await response.json();
+
+        if (!response.ok) {
+            result.textContent = data.error || "Prediction failed.";
+            return;
+        }
 
         result.textContent = data.prediction;
 
