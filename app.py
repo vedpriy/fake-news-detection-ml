@@ -1,9 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import joblib
 import re
 import os
 
 app = Flask(__name__)
+
+# Allow requests from the deployed frontend
+CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
